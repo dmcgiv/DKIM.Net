@@ -15,7 +15,9 @@ using System.Reflection;
 namespace McGiv.DKIM
 {
 
-
+	/// <summary>
+	/// Conterts a MailMessage entire contents to a string or byte array.
+	/// </summary>
 	public static class MailMessageData
 	{
 		
