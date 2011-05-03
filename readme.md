@@ -43,10 +43,10 @@ example
 	var msg = new MailMessage();
 
 	msg.From = new MailAddress("me@mydomain.com", "Joe Bloggs");
-	msg.To.Add(new MailAddress("check-auth@verifier.port25.com", "Port25"));
+	msg.To.Add(new MailAddress("someone@otherdomain.com", "Some One"));
 	msg.Subject = "Testing DKIM.Net";
 	msg.Body = "Hello World";
 
-	msg = _signer.SignMessage(msg);
+	msg = signer.SignMessage(msg);
 
 	new SmtpClient().Send(msg);
