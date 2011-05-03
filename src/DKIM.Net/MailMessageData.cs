@@ -67,24 +67,8 @@ namespace McGiv.DKIM
 		}
 
 
-		public static string GetText(MailMessage message)
+		public static string GetText(this MailMessage message)
 		{
-			using(var reader = new StreamReader(new MemoryStream( GetBytes(message))))
-			{
-				return reader.ReadToEnd();
-			}
-		}
-
-
-
-		/*
-		 * Passes a MemoryStream to the mail writer so that entire email content can be retrieved.
-		 * 
-		 * */
-		public static byte[] GetBytes(MailMessage message)
-		{
-
-			
 			using (var internalStream = new ClosableMemoryStream())
 			{
 				object mailWriter = _mailWriterContructor.Invoke(new object[] { internalStream });
@@ -93,16 +77,14 @@ namespace McGiv.DKIM
 				_closeMethod.Invoke(mailWriter, BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] {}, null);
 
 				internalStream.Position = 0;
-
-				var buffer = new byte[internalStream.Length];
-				var i = internalStream.Read(buffer, 0, (int)internalStream.Length);
-				return buffer;
+				using(var reader = new StreamReader(internalStream))
+				{
+					return reader.ReadToEnd();
+				}
+				
 			}
-
 		}
 
-
-		
 
 	}
 }

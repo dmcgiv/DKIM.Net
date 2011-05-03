@@ -81,15 +81,15 @@ namespace McGiv.DKIM
 
 
 			// get email content and generate initial signature
-			var data = MailMessageData.GetBytes(message);
-			var email = Email.Parse(data);
+			var text = message.GetText();
+			var email = Email.Parse(text);
 			var sig = this.GenerateSignature(email);
 
 			message.Headers.Set(DKIMSignatureKey, sig);
 
 			// get updated email content and update signature with the signed signature
-			data = MailMessageData.GetBytes(message);
-			email = Email.Parse(data);
+			text = message.GetText();
+			email = Email.Parse(text);
 			sig = this.SignSignature(email, sig);
 
 			message.Headers.Set(DKIMSignatureKey, sig);
