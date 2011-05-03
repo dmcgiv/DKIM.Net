@@ -49,6 +49,7 @@
     <Compile Include="EmailTests.cs" />
     <Compile Include="MailMessageDataTests.cs" />
     <Compile Include="MailMessageTests.cs" />
+    <Compile Include="PrivateKeySignerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -59,6 +60,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="mycert.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="_App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

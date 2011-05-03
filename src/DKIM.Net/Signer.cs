@@ -1,11 +1,7 @@
 ﻿using System;
-using System.IO;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.Security;
 
 namespace McGiv.DKIM
 {
@@ -13,48 +9,73 @@ namespace McGiv.DKIM
 
 	public class DKIMSigner
 	{
-		
 
-		public DKIMSigner()
-		{
-			// default should be simple but simple header canonicalization is currently not working :(
-			HeaderCanonicalization = CanonicalizationAlgorithm.Relaxed;
-		}
+
+		/// <summary>
+		/// Header key used to add DKIM information to email.
+		/// </summary>
+		public const string DKIMSignatureKey = "DKIM-Signature";
+
+
+		private readonly IPrivateKeySigner _privateKeySigner;
+
+		/// <summary>
+		/// The domain that will be signing the email.
+		/// </summary>
+		private string _domain;
 
 		/// <summary>
 		/// The selector used to obtain the public key.
 		/// see http://www.dkim.org/info/dkim-faq.html#technical
 		/// </summary>
-		public string Selector { get; set; }
-
-
-		/// <summary>
-		/// The domain that will be signing the email.
-		/// </summary>
-		public string Domain { get; set; }
-
-
-		// todo remove once stable.
-		public IDebug Debug { get; set; }
-
-		/// <summary>
-		/// The private key used to sign the email.
-		/// </summary>
-		public string PrivateKey { get; set; }
-
-
-		/// <summary>
-		/// The encoding of the email.
-		/// </summary>
-		public Encoding Encoding { get; set; }
-
+		private string _selector;
 
 
 		/// <summary>
 		/// Be careful what headers you sign. Ensure that they are not changed by your SMTP server or relay.
 		/// If a header if changed after signing DKIM will fail.
 		/// </summary>
-		public string[] HeadersToSign { get; set; }
+		private string[] _headersToSign;
+
+
+		public DKIMSigner(IPrivateKeySigner privateKeySigner, string domain, string selector, string[] headersToSign = null)
+		{
+			if (privateKeySigner == null)
+			{
+				throw new ArgumentNullException("privateKeySigner");
+			}
+
+			if (domain == null)
+			{
+				throw new ArgumentNullException("domain");
+			}
+
+			if (selector == null)
+			{
+				throw new ArgumentNullException("selector");
+			}
+
+
+			_privateKeySigner = privateKeySigner;
+			_domain = domain;
+			_selector = selector;
+			_headersToSign = headersToSign;
+
+
+			// default should be simple but simple header canonicalization is currently not working :(
+			HeaderCanonicalization = CanonicalizationAlgorithm.Relaxed;
+			this.Encoding = Encoding.UTF8;
+
+		}
+
+		
+		// todo remove once stable.
+		public IDebug Debug { get; set; }
+
+		/// <summary>
+		/// The encoding of the email.
+		/// </summary>
+		public Encoding Encoding { get; set; }
 
 		public CanonicalizationAlgorithm HeaderCanonicalization { get; private set; } // todo change setter to public once simple working
 		public CanonicalizationAlgorithm BodyCanonicalization { get; set; }
@@ -64,10 +85,6 @@ namespace McGiv.DKIM
 
 
 
-		/// <summary>
-		/// Header key used to add DKIM information to email.
-		/// </summary>
-		public const string DKIMSignatureKey = "DKIM-Signature";
 
 		public MailMessage SignMessage(MailMessage message)
 		{
@@ -152,14 +169,14 @@ namespace McGiv.DKIM
 			// signing domain
 			signatureValue.Append(nl);
 			signatureValue.Append("d=");
-			signatureValue.Append(this.Domain);
+			signatureValue.Append(_domain);
 			signatureValue.Append("; ");
 			
 
 			// selector
 			signatureValue.Append(nl);
 			signatureValue.Append("s=");
-			signatureValue.Append(this.Selector);
+			signatureValue.Append(_selector);
 			signatureValue.Append("; ");
 
 
@@ -179,7 +196,7 @@ namespace McGiv.DKIM
 			// headers to be signed
 			signatureValue.Append(nl);
 			signatureValue.Append("h=");
-			foreach (var header in this.HeadersToSign)
+			foreach (var header in _headersToSign)
 			{
 				signatureValue.Append(header);
 				signatureValue.Append(':');
@@ -205,7 +222,7 @@ namespace McGiv.DKIM
 		{
 
 
-			var headers = Canonicalization.CanonicalizationHeaders(email.Headers, this.HeaderCanonicalization, true, this.HeadersToSign);
+			var headers = Canonicalization.CanonicalizationHeaders(email.Headers, this.HeaderCanonicalization, true, _headersToSign);
 
 			if (this.Debug != null)
 			{
@@ -217,18 +234,10 @@ namespace McGiv.DKIM
 			}
 
 
-			using (TextReader reader = new StringReader(this.PrivateKey))
-			{
-				var r = new PemReader(reader);
-				var o = (AsymmetricCipherKeyPair)r.ReadObject();
-				byte[] plaintext = this.Encoding.GetBytes(headers);
-				ISigner sig = SignerUtilities.GetSigner("SHA256WithRSAEncryption");
-				sig.Init(true, o.Private);
-				sig.BlockUpdate(plaintext, 0, plaintext.Length);
-				
-				// assumes signature ends with "b="
-				return signature + Convert.ToBase64String(sig.GenerateSignature());
-			}
+
+			// assumes signature ends with "b="
+			return signature +  Convert.ToBase64String(_privateKeySigner.Sign(this.Encoding.GetBytes(headers)));
+
 
 			
 

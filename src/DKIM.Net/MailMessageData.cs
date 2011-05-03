@@ -73,15 +73,20 @@ namespace McGiv.DKIM
 			{
 				object mailWriter = _mailWriterContructor.Invoke(new object[] { internalStream });
 
-				_sendMethod.Invoke(message, BindingFlags.Instance | BindingFlags.NonPublic, null, new[] {mailWriter, true}, null);
-				_closeMethod.Invoke(mailWriter, BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] {}, null);
+				_sendMethod.Invoke(message,  new[] {mailWriter, true});
+				_closeMethod.Invoke(mailWriter, new object[] {});
 
 				internalStream.Position = 0;
+				string text;
 				using(var reader = new StreamReader(internalStream))
 				{
-					return reader.ReadToEnd();
+					text = reader.ReadToEnd();
 				}
-				
+
+				internalStream.ReallyClose();
+
+				return text;
+
 			}
 		}
 
