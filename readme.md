@@ -11,8 +11,8 @@ using simple canonicalization for headers. (http://www.dkim.org/specs/rfc4871-dk
 example
 ------------
 
-	var dkim = new DKIMSigner(
-	PrivateKeySigner.Create(@"-----BEGIN RSA PRIVATE KEY-----
+
+	var privateKey = PrivateKeySigner.Create(@"-----BEGIN RSA PRIVATE KEY-----
 	MIICXAIBAAKBgQDcruApwJruvr9GHYMnUlkOevmczah961FxiQXu7JwHiepKGkVf
 	9f8DvzSiMprrqoR14f4puAi5PAG+MBxkvbAMI/kCc57E8nEN4ZGxKPRtuhiY6bsP
 	SpxI7LXgHqlt/yOFrJNdTjSwGpAlVfNMd3BnP2RSlHgj58ZSwYYhG15OmQIDAQAB
@@ -26,7 +26,10 @@ example
 	HzQArQBJlTivAgNZMi+6WG1Pzwj52YYrxzNEcTj94HvnoTXpx0Req/fITNCvZE3a
 	3AYbYbdow1d3wLSe97kCQGfHreVl7MWOEk/5y0NASxaolY4+aFoXLwkGe1qIN2Vu
 	xsjBBm9osDHsFVIuggd4fYKj05IWA6jX4z1LiRnLvVc=
-	-----END RSA PRIVATE KEY-----"),
+	-----END RSA PRIVATE KEY-----");
+	
+	var dkim = new DKIMSigner(
+	privateKey,
 	"mydomain.com",
 	"dkim",
 	new string[] { "From", "To", "Subject" }
