@@ -16,7 +16,6 @@ Bouncy Castle Cryptography API (http://www.bouncycastle.org/)
 example
 -----------
 
-<code>
 	var signer = new DKIMSigner();
 
 	signer.Encoding = System.Text.Encoding.ASCII;
@@ -51,4 +50,3 @@ example
 	msg = _signer.SignMessage(msg);
 
 	new SmtpClient().Send(msg);
-</code>
