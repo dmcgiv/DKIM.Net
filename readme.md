@@ -1,11 +1,6 @@
 DKIM.Net
 ===========
-DomainKeys Identified Mail for .Net Framework
-
-
-known issues
-------------
-using simple canonicalization for headers. (http://www.dkim.org/specs/rfc4871-dkimbase.html#canonicalization)
+DomainKeys Identified Mail (DKIM) and Domain Key email signing for .Net Framework
 
 
 example
@@ -28,13 +23,20 @@ example
 	xsjBBm9osDHsFVIuggd4fYKj05IWA6jX4z1LiRnLvVc=
 	-----END RSA PRIVATE KEY-----");
 	
-	var dkim = new DKIMSigner(
+	var dkim = new DkimSigner(
 	privateKey,
 	"mydomain.com",
 	"dkim",
 	new string[] { "From", "To", "Subject" }
 	);
 
+	
+	var domainkey = new DomainKeySigner(
+	privateKey,
+	"mydomain.com",
+	"domainkey",
+	new string[] { "From", "To", "Subject" }
+	);
 
 	var msg = new MailMessage();
 
@@ -44,6 +46,7 @@ example
 	msg.Body = "Hello World";
 
 	msg = dkim.SignMessage(msg);
+	msg = domainkey.SignMessage(msg);
 
 	new SmtpClient().Send(msg);
  

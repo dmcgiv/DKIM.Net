@@ -66,7 +66,6 @@ namespace DKIM
 				{
 					if (!email.Headers.ContainsKey(key))
 					{
-						// todo - inform signer of headers that exist.
 						continue;
 					}
 					var h = email.Headers[key];

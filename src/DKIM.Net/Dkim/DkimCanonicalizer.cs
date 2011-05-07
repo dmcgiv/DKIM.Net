@@ -168,7 +168,7 @@ namespace DKIM
 
 			if (invalidHeaders.Count > 0)
 			{
-				throw new ArgumentException("The following headers to be signed do not exist: " + string.Join(", ", invalidHeaders));
+				throw new ArgumentException("The following headers to be signed do not exist: " + string.Join(", ", invalidHeaders.ToArray()));
 			}
 		}
 

@@ -43,6 +43,9 @@ namespace DKIM
 		public Encoding Encoding { get; set; }
 		public DomainKeyCanonicalizationAlgorithm Canonicalization { get; set; }
 
+		// todo remove once stable.
+		public IDebug Debug { get; set; }
+
 
 		public DomainKeySigner(IPrivateKeySigner privateKeySigner, string domain, string selector, string[] headersToSign)
 		{
@@ -77,18 +80,10 @@ namespace DKIM
 			message.BodyEncoding = this.Encoding;
 			message.SubjectEncoding = this.Encoding;
 			
-
-
-
-			
 			var email = Email.Parse(message);
 			var sig = this.GenerateSignature(email);
 
-			
 			message.Headers.Prepend(SignatureKey, sig);
-			
-
-			
 
 			return message;
 		}
@@ -97,40 +92,22 @@ namespace DKIM
 		public string GenerateSignature(Email email)
 		{
 
-
-			Console.WriteLine();
-			Console.WriteLine("-- org start ---");
-			Console.Write(email.Origional);
-			Console.WriteLine("-- org end ---");
-
 			var signatureValue = new StringBuilder();
-
-			var nl = Email.NewLine + " ";
-			nl = string.Empty;
-
-
-
 
 
 			// algorithm used
-			signatureValue.Append(nl);
 			signatureValue.Append("a=");
 			signatureValue.Append(_privateKeySigner.Algorithm);
 			signatureValue.Append("; ");
 
 
-
-
-
 			// Canonicalization
-			signatureValue.Append(nl);
 			signatureValue.Append("c=");
 			signatureValue.Append(this.Canonicalization.ToString().ToLower());
 			signatureValue.Append("; ");
 
 
 			// signing domain
-			signatureValue.Append(nl);
 			signatureValue.Append("d=");
 			signatureValue.Append(_domain);
 			signatureValue.Append("; ");
@@ -139,7 +116,6 @@ namespace DKIM
 			// headers to be signed
 			if (_headersToSign != null && _headersToSign.Length > 0)
 			{
-				signatureValue.Append(nl);
 				signatureValue.Append("h=");
 				foreach (var header in _headersToSign)
 				{
@@ -151,26 +127,17 @@ namespace DKIM
 			}
 
 
-
 			// public key location
-			signatureValue.Append(nl);
 			signatureValue.Append("q=dns; ");
 
 
-
-		
-
-
 			// selector
-			signatureValue.Append(nl);
 			signatureValue.Append("s=");
 			signatureValue.Append(_selector);
 			signatureValue.Append("; ");
 
 
 			// signature data
-
-			signatureValue.Append(nl);
 			signatureValue.Append("b=");
 			signatureValue.Append(SignSignature(email));
 			signatureValue.Append(";");
@@ -184,10 +151,10 @@ namespace DKIM
 
 			var text = DomainKeyCanonicalizer.Canonicalize(email, this.Canonicalization, _headersToSign);
 
-			Console.WriteLine();
-			Console.WriteLine("-- start ---");
-			Console.Write(text);
-			Console.WriteLine("-- end ---");
+			if (this.Debug != null)
+			{
+				this.Debug.WriteContent("DomainKey canonicalized headers", text);
+			}
 
 			return Convert.ToBase64String(_privateKeySigner.Sign(this.Encoding.GetBytes(text)));
 

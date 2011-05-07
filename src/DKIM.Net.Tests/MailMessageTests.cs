@@ -19,8 +19,8 @@ namespace DKIM.Tests
 
 
 			
-			//message.To.Add(new MailAddress("check-auth@verifier.port25.com", "Port25"));
-			message.To.Add(new MailAddress("damien@mcgiv.com", "Damien McGivern"));
+			message.To.Add(new MailAddress("check-auth@verifier.port25.com", "Port25"));
+			
 
 
 			message.From = new MailAddress(ConfigurationManager.AppSettings["from"]);
@@ -37,10 +37,10 @@ namespace DKIM.Tests
 
 
 
-			var p = PrivateKeySigner.Create(ConfigurationManager.AppSettings["privatekey"], SigningAlgorithm.RSASha1);
+			var privateKey = PrivateKeySigner.Create(ConfigurationManager.AppSettings["privatekey"], SigningAlgorithm.RSASha1);
 
 			var dkim = new DkimSigner(
-				p,
+				privateKey,
 				ConfigurationManager.AppSettings["domain"],
 				ConfigurationManager.AppSettings["selector"],
 				new string[] { "From", "To", "Subject" }
@@ -51,30 +51,30 @@ namespace DKIM.Tests
 			var debugger = new ConsoleDebug();
 
 			dkim.Debug = debugger;
-			
 
 
-			var dm = new DomainKeySigner(p, ConfigurationManager.AppSettings["domain"],
-													ConfigurationManager.AppSettings["selector"], new string[] { "From", "To", "Subject"/*, "Content-Type", "Content-Transfer-Encoding"*/ });
+
+			var domainkey = new DomainKeySigner(
+				privateKey, 
+				ConfigurationManager.AppSettings["domain"],
+				ConfigurationManager.AppSettings["selector"], 
+				new string[] { "From", "To", "Subject" }
+				);
 
 			
 
 			var signedMessage = dkim.SignMessage(message);
 
-			// debug
+			
 			var text = signedMessage.GetText();
 			debugger.WriteLine();
 			debugger.WriteContent("dkim", text);
-			// debug
 
 
-
-			signedMessage = dm.SignMessage(signedMessage);
+			signedMessage = domainkey.SignMessage(signedMessage);
 			
-			// debug
 			text = signedMessage.GetText();
 			debugger.WriteContent("domainkey", text);
-			// debug
 
 			new SmtpClient().Send(signedMessage);
 

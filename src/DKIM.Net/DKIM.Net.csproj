@@ -12,6 +12,7 @@
     <AssemblyName>DKIM.Net</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,7 +42,6 @@
     <Compile Include="DomainKeys\DomainKeySigner.cs" />
     <Compile Include="Email.cs" />
     <Compile Include="MailMessageExtensions.cs" />
-    <Compile Include="MailSigner.cs" />
     <Compile Include="NameValueCollectionExtensions.cs" />
     <Compile Include="OpenSslKey.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
