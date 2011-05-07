@@ -1,0 +1,5 @@
+07 May 2011
+
+Major refractoring - breaks API
+Added support for DomainKeys
+fixed DKIM simple header canonicalization

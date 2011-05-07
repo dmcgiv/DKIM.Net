@@ -1,5 +1,4 @@
-﻿var dkim = new DKIMSigner(
-PrivateKeySigner.Create(@"-----BEGIN RSA PRIVATE KEY-----
+﻿var privateKey = PrivateKeySigner.Create(@"-----BEGIN RSA PRIVATE KEY-----
 MIICXAIBAAKBgQDcruApwJruvr9GHYMnUlkOevmczah961FxiQXu7JwHiepKGkVf
 9f8DvzSiMprrqoR14f4puAi5PAG+MBxkvbAMI/kCc57E8nEN4ZGxKPRtuhiY6bsP
 SpxI7LXgHqlt/yOFrJNdTjSwGpAlVfNMd3BnP2RSlHgj58ZSwYYhG15OmQIDAQAB
@@ -13,9 +12,22 @@ yti/H0ftuGd1OxHjT0RskZXVc4aoztXqkBHin7P1QnL/l20YXw73EUqCKdECQEvf
 HzQArQBJlTivAgNZMi+6WG1Pzwj52YYrxzNEcTj94HvnoTXpx0Req/fITNCvZE3a
 3AYbYbdow1d3wLSe97kCQGfHreVl7MWOEk/5y0NASxaolY4+aFoXLwkGe1qIN2Vu
 xsjBBm9osDHsFVIuggd4fYKj05IWA6jX4z1LiRnLvVc=
------END RSA PRIVATE KEY-----"),
+-----END RSA PRIVATE KEY-----");
+
+
+
+var dkim = new DkimSigner(
+privateKey,
 "mydomain.com",
 "dkim",
+new string[] { "From", "To", "Subject" }
+);
+
+
+var dk = new DomainKeySigner(
+privateKey,
+"mydomain.com",
+"domainkey",
 new string[] { "From", "To", "Subject" }
 );
 
@@ -28,5 +40,6 @@ msg.Subject = "Testing DKIM.Net";
 msg.Body = "Hello World";
 
 msg = dkim.SignMessage(msg);
+msg = dk.SignMessage(msg);
 
 new SmtpClient().Send(msg);

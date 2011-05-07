@@ -8,7 +8,7 @@
     <ProjectGuid>{DD761CA6-0CFE-4BD9-8DF5-4BBFFA4482F0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>McGiv.DKIM.Tests</RootNamespace>
+    <RootNamespace>DKIM.Tests</RootNamespace>
     <AssemblyName>DKIM.Net.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -45,10 +45,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CanonicalizationTests.cs" />
-    <Compile Include="EmailTests.cs" />
+    <Compile Include="DkimCanonicalizationTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="EmailTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="MailMessageDataTests.cs" />
     <Compile Include="MailMessageTests.cs" />
+    <Compile Include="NameValueCollectionTests.cs" />
     <Compile Include="PrivateKeySignerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

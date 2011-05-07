@@ -8,7 +8,7 @@
     <ProjectGuid>{1CFB14B2-E0FF-4491-820F-490CFFBAA47A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>McGiv.DKIM</RootNamespace>
+    <RootNamespace>DKIM</RootNamespace>
     <AssemblyName>DKIM.Net</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -35,19 +35,24 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Canonicalization.cs" />
+    <Compile Include="Dkim\DkimCanonicalizer.cs" />
     <Compile Include="Debug.cs" />
+    <Compile Include="DomainKeys\DomainKeyCanonicalizer.cs" />
+    <Compile Include="DomainKeys\DomainKeySigner.cs" />
     <Compile Include="Email.cs" />
-    <Compile Include="MailMessageData.cs" />
+    <Compile Include="MailMessageExtensions.cs" />
+    <Compile Include="MailSigner.cs" />
+    <Compile Include="NameValueCollectionExtensions.cs" />
     <Compile Include="OpenSslKey.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SecureSigner.cs" />
-    <Compile Include="Signer.cs" />
+    <Compile Include="Dkim\DkimSigner.cs" />
     <Compile Include="WhiteSpace.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="example.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

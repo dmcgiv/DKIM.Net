@@ -1,6 +1,8 @@
 ﻿/*
+ * DKIM.Net
  * 
- * see http://www.dkim.org/specs/rfc4871-dkimbase.html#canonicalization
+ * Copyright (C) 2011 Damien McGivern, damien@mcgiv.com
+ * 
  * 
  * 
  * */
@@ -9,34 +11,48 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace McGiv.DKIM
+namespace DKIM
 {
-	public enum CanonicalizationAlgorithm
+	public enum DkimCanonicalizationAlgorithm
 	{
 		Simple,
 		Relaxed
 	}
 
-	
-	public static class Canonicalization
+
+	/*
+	* 
+	* see http://www.dkim.org/specs/rfc4871-dkimbase.html#canonicalization
+	* 
+	* 
+	* */
+	public static class DkimCanonicalizer
 	{
-		
-		public static string CanonicalizationHeaders(Dictionary<string, EmailHeader> headers, CanonicalizationAlgorithm type, bool includeSignatureHeader, params string[] headersToSign)
+
+		public static string CanonicalizeHeaders(Dictionary<string, EmailHeader> headers, DkimCanonicalizationAlgorithm type, bool includeSignatureHeader, params string[] headersToSign)
 		{
 
 			if (includeSignatureHeader)
 			{
 				if (headersToSign == null || headersToSign.Length == 0)
 				{
-					headersToSign = new string[] {DKIMSigner.DKIMSignatureKey};
+					headersToSign = new string[] { "From", DkimSigner.SignatureKey };
 				}
 				else
 				{
-					headersToSign = new List<string>(headersToSign) {DKIMSigner.DKIMSignatureKey}.ToArray();
+					var tmp = new string[headersToSign.Length + 1];
+					//tmp[0] = DkimSigner.SignatureKey;
+					//Array.Copy(headersToSign, 0, tmp, 1, headersToSign.Length);
+					Array.Copy(headersToSign, 0, tmp, 0, headersToSign.Length);
+					tmp[headersToSign.Length] = DkimSigner.SignatureKey;
+					headersToSign = tmp;
+
 				}
 			}
 
 			ValidateHeaders(headers, headersToSign);
+
+			var sb = new StringBuilder();
 
 			switch (type)
 			{
@@ -50,10 +66,9 @@ namespace McGiv.DKIM
 				 * be case folded and whitespace MUST NOT be changed.
 				 *  
 				 * */
-				case CanonicalizationAlgorithm.Simple:
+				case DkimCanonicalizationAlgorithm.Simple:
 					{
-						var sb = new StringBuilder();
-
+						
 						foreach (var key in headersToSign)
 						{
 							var h = headers[key];
@@ -67,7 +82,8 @@ namespace McGiv.DKIM
 						{
 							sb.Length -= Email.NewLine.Length;
 						}
-						return sb.ToString();
+
+						break;
 
 					}
 
@@ -101,10 +117,9 @@ namespace McGiv.DKIM
 				 * from the header field value. The colon separator MUST be retained.
 				 * 
 				 * */
-				case CanonicalizationAlgorithm.Relaxed:
+				case DkimCanonicalizationAlgorithm.Relaxed:
 					{
-						var sb = new StringBuilder();
-
+						
 						foreach (var key in headersToSign)
 						{
 							var h = headers[key];
@@ -112,8 +127,8 @@ namespace McGiv.DKIM
 							sb.Append(':');
 
 							sb.Append(h.FoldedValue
-										? h.Value.Trim().Replace(Email.NewLine, string.Empty).ReduceWitespace()
-							          	: h.Value.Trim().ReduceWitespace());
+								? h.Value.Trim().Replace(Email.NewLine, string.Empty).ReduceWitespace()
+								: h.Value.Trim().ReduceWitespace());
 
 							sb.Append(Email.NewLine);
 						}
@@ -123,18 +138,24 @@ namespace McGiv.DKIM
 							sb.Length -= Email.NewLine.Length;
 						}
 
-						return sb.ToString();
+						break;
+
+
 					}
-					default:
+				default:
 					{
 						throw new ArgumentException("Invalid canonicalization type.");
 					}
 			}
+
+			return sb.ToString();
 		}
 
 		private static void ValidateHeaders(Dictionary<string, EmailHeader> headers, IEnumerable<string> headersToSign)
 		{
-// check all headers that are to be signed exist
+			// todo From MUST be included
+
+			// check all headers that are to be signed exist
 			var invalidHeaders = new List<string>();
 			foreach (var sh in headersToSign)
 			{
@@ -151,10 +172,10 @@ namespace McGiv.DKIM
 			}
 		}
 
-		
 
 
-		public static string CanonicalizationBody(string body, CanonicalizationAlgorithm type)
+
+		public static string CanonicalizeBody(string body, DkimCanonicalizationAlgorithm type)
 		{
 
 			var sb = new StringBuilder(body.Length);
@@ -179,7 +200,7 @@ namespace McGiv.DKIM
 				 * between words. If this is a concern, the "simple" body canonicalization algorithm should be used instead.
 				 * 
 				 * */
-				case CanonicalizationAlgorithm.Relaxed:
+				case DkimCanonicalizationAlgorithm.Relaxed:
 					{
 						using (var reader = new StringReader(body))
 						{
@@ -223,7 +244,7 @@ namespace McGiv.DKIM
 				 * that is, the canonicalized length will be 2 octets.
 				 * 
 				 * */
-				case CanonicalizationAlgorithm.Simple:
+				case DkimCanonicalizationAlgorithm.Simple:
 					{
 						using (var reader = new StringReader(body))
 						{

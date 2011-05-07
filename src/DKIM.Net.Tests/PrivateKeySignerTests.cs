@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using NUnit.Framework;
 
-namespace McGiv.DKIM.Tests
+namespace DKIM.Tests
 {
 	[TestFixture]
 	public class PrivateKeySignerTests

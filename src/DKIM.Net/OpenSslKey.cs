@@ -35,7 +35,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace McGiv.DKIM
+namespace DKIM
 {
 	internal static class OpenSslKey
 	{

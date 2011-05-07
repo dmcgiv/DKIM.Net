@@ -1,9 +1,18 @@
-﻿using System;
+﻿/*
+ * DKIM.Net
+ * 
+ * Copyright (C) 2011 Damien McGivern, damien@mcgiv.com
+ * 
+ * 
+ * 
+ * */
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Mail;
 
 
-namespace McGiv.DKIM
+namespace DKIM
 {
 
 	/// <summary>
@@ -25,6 +34,7 @@ namespace McGiv.DKIM
 	{
 		public Dictionary<string, EmailHeader> Headers { get; private set; }
 		public string Body { get; private set; }
+		public string Origional { get; private set; }
 
 		Email()
 		{
@@ -33,25 +43,21 @@ namespace McGiv.DKIM
 
 		public const string NewLine = "\r\n";
 
-		
 
 
-		public static Email Parse(byte[] data)
+		public static Email Parse(MailMessage message)
 		{
-			return Parse(new StreamReader(new MemoryStream(data)));
+			return Parse(message.GetText());
 		}
 
 		public static Email Parse(string data)
 		{
-			return Parse(new StringReader(data));
-		}
-
-		static Email Parse(TextReader reader)
-		{
 			
+
 			var headers = new Dictionary<string, EmailHeader>(StringComparer.InvariantCultureIgnoreCase);
-			using (reader)
+			using (var reader = new StringReader(data))
 			{
+				
 				string line;
 				string lastKey = null;
 				while ((line = reader.ReadLine()) != null)
@@ -60,7 +66,7 @@ namespace McGiv.DKIM
 					if (line == string.Empty)
 					{
 						// end of headers
-						return new Email { Headers = headers, Body = reader.ReadToEnd() };
+						return new Email { Headers = headers, Body = reader.ReadToEnd(), Origional = data };
 					}
 
 
@@ -70,7 +76,7 @@ namespace McGiv.DKIM
 						var header = headers[lastKey];
 						header.FoldedValue = true;
 						header.Value += Email.NewLine + line;
-
+						
 						continue;
 					}
 
@@ -87,6 +93,7 @@ namespace McGiv.DKIM
 					var value = line.Substring(sep + 1);
 					lastKey = key.Trim().ToLower();
 
+					
 					headers.Add(lastKey, new EmailHeader { Key = key, Value = value });
 
 

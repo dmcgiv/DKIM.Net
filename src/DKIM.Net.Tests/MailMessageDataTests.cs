@@ -2,7 +2,7 @@
 using System.Net.Mail;
 using NUnit.Framework;
 
-namespace McGiv.DKIM.Tests
+namespace DKIM.Tests
 {
 
 	[TestFixture]
@@ -18,7 +18,7 @@ namespace McGiv.DKIM.Tests
 			msg.Subject = "Test Message";
 			msg.Body = "A simple message";
 
-			var data = MailMessageData.GetText(msg);
+			var data = msg.GetText();
 
 
 			Console.WriteLine(data);
