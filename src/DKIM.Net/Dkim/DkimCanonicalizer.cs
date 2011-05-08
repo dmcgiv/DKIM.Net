@@ -177,8 +177,12 @@ namespace DKIM
 
 		public static string CanonicalizeBody(string body, DkimCanonicalizationAlgorithm type)
 		{
+			if (body == null)
+			{
+				body = string.Empty;
+			}
 
-			var sb = new StringBuilder(body.Length);
+			var sb = new StringBuilder(body.Length + Email.NewLine.Length);
 
 			switch (type)
 			{
@@ -216,9 +220,10 @@ namespace DKIM
 									continue;
 								}
 
-								for (int i = 0; i < emptyLineCount; i++)
+								while (emptyLineCount > 0)
 								{
 									sb.AppendLine();
+									emptyLineCount--;
 								}
 
 
@@ -260,9 +265,10 @@ namespace DKIM
 									continue;
 								}
 
-								for (int i = 0; i < emptyLineCount; i++)
+								while (emptyLineCount > 0)
 								{
 									sb.AppendLine();
+									emptyLineCount--;
 								}
 
 								sb.AppendLine(line);
