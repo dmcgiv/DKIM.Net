@@ -17,7 +17,6 @@ namespace DKIM
 	{
         [NotNull]
         string SignEmail([NotNull]string text);
-		//MailMessage SignMailMessage(MailMessage message);
 	}
 
 

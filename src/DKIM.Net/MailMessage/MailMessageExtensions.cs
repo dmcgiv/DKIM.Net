@@ -7,10 +7,7 @@
  * 
  * */
 using System;
-using System.IO;
-using System.Linq.Expressions;
 using System.Net.Mail;
-using System.Reflection;
 using JetBrains.Annotations;
 
 
@@ -21,54 +18,11 @@ namespace DKIM
 	public static class MailMessageExtensions
 	{
 
-	    private static readonly Func<Stream, object> MailWriterFactory;
-	    private static readonly Action<MailMessage, object, bool, bool> Send;
-        private static readonly Action<object> Close;
-
-		static MailMessageExtensions()
-		{
-
-            var messageType = typeof(MailMessage);
-            var mailWriterType = messageType.Assembly.GetType("System.Net.Mail.MailWriter");
-            
-
-            // mail writer constructor
-            {
-                var constructorInfo = mailWriterType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(Stream) }, null);
-                var argument = Expression.Parameter(typeof(Stream), "arg");
-                var conExp = Expression.New(constructorInfo, argument);
-                MailWriterFactory = Expression.Lambda<Func<Stream, object>>(conExp, argument).Compile();
-            }
-            
-            
-            // mail message Send method
-            {
-                var sendMethod = messageType.GetMethod("Send", BindingFlags.Instance | BindingFlags.NonPublic);
-                var mailWriter = Expression.Parameter(typeof(object), "mailWriter");
-                var sendEnvelope = Expression.Parameter(typeof(bool), "sendEnvelope");
-                var allowUnicode = Expression.Parameter(typeof(bool), "allowUnicode");
-                var instance = Expression.Parameter(messageType, "instance");
-                var call = Expression.Call(instance, sendMethod, Expression.Convert(mailWriter, mailWriterType), sendEnvelope, allowUnicode);
-
-                Send = Expression.Lambda<Action<MailMessage, object, bool, bool>>(call, instance, mailWriter, sendEnvelope, allowUnicode).Compile();
-            }
 
 
-            // mail writer Close method
-            {
-                var closeMethod = mailWriterType.GetMethod("Close", BindingFlags.Instance | BindingFlags.NonPublic);
-                var instance = Expression.Parameter(typeof(object), "instance");
-                var call = Expression.Call(Expression.Convert(instance, mailWriterType), closeMethod);
-
-                Close = Expression.Lambda<Action<object>>(call, instance).Compile();
-            }
-
-
-
-		}
-
-
-
+        /// <summary>
+        /// Parse a MailMessage content into an Email object.
+        /// </summary>
         [NotNull]
         public static Email Parse([NotNull]this MailMessage message)
         {
@@ -77,47 +31,11 @@ namespace DKIM
                 throw new ArgumentNullException("message");
             }
 
-            return Email.Parse(GetText(message));
+            return Email.Parse(message.GetText());
         }
 
 
-		/// <summary>
-		/// Converts the MailMessage entire email contents to a string.
-		/// </summary>
-        [NotNull]
-        public static string GetText([NotNull]this MailMessage message)
-		{
-		    if (message == null)
-		    {
-		        throw new ArgumentNullException("message");
-		    }
 
-            if(message.From == null)
-            {
-                throw new ArgumentException("From property cannot be null");
-            }
-
-		    using (var internalStream = new ClosableMemoryStream())
-			{
-				
-                object mailWriter = MailWriterFactory(internalStream);
-
-			    Send(message, mailWriter, false, true);
-			    Close(mailWriter);
-
-				internalStream.Position = 0;
-				string text;
-				using (var reader = new StreamReader(internalStream))
-				{
-					text = reader.ReadToEnd();
-				}
-
-				internalStream.ReallyClose();
-
-				return text;
-
-			}
-		}
 
 
         //public static void PrependHeader([NotNull]this MailMessage message, bool useEnvelope, [NotNull]string key, [NotNull]string value)
@@ -162,15 +80,22 @@ namespace DKIM
 
 			var email = Email.Parse(message.GetText());
 
-			if(email.Headers.ContainsKey("Content-Type"))
-			{
-				return !email.Headers["Content-Type"].Value.Trim()
-					.StartsWith("multipart/alternative", StringComparison.InvariantCultureIgnoreCase);
-			}
-
-			return true;
+		    return CanSign(email);
 
 		}
+
+
+        private static bool CanSign([NotNull] Email email)
+        {
+
+            if (email.Headers.ContainsKey("Content-Type"))
+            {
+                return !email.Headers["Content-Type"].Value.Trim()
+                    .StartsWith("multipart/alternative", StringComparison.InvariantCultureIgnoreCase);
+            }
+
+            return true;
+        }
 
 
         [NotNull]
@@ -190,6 +115,12 @@ namespace DKIM
             message.SubjectEncoding = signer.Encoding;
 
             var email = Email.Parse(message.GetText());
+
+            if(!CanSign(email))
+            {
+                throw new InvalidOperationException("Unable to Domain Key sign the message");
+            }
+
             var sig = signer.GenerateSignature(email);
 
             message.Headers.Prepend(DomainKeySigner.SignatureKey, sig);
@@ -218,6 +149,12 @@ namespace DKIM
 
             // get email content and generate initial signature
             var email = Email.Parse(message.GetText());
+
+            if (!CanSign(email))
+            {
+                throw new InvalidOperationException("Unable to Domain Key sign the message");
+            }
+
             var value = signer.GenerateDkimHeaderValue(email);
 
 
@@ -237,22 +174,5 @@ namespace DKIM
 
             return message;
         }
-
-		/// <summary>
-		/// Use memory stream with dummy Close method as MailWriter writes final CRLF when closing the stream. This allows us to read the stream and close it manually.
-		/// </summary>
-		class ClosableMemoryStream : MemoryStream
-		{
-		    public override void Close()
-			{
-                // do not close just yet
-			}
-
-			public void ReallyClose()
-			{
-				base.Close();
-			}
-		}
-
 	}
 }
