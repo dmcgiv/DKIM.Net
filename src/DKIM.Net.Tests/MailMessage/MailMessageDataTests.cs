@@ -18,10 +18,13 @@ namespace DKIM.Tests
 			msg.Subject = "Test Message";
 			msg.Body = "A simple message";
             
-			var data = msg.GetText();
+			var text = msg.GetText();
 
 
-			Console.WriteLine(data);
+			//Console.WriteLine(text);
+
+
+            Assert.IsNotNullOrEmpty(text);
 
 		}
 	}

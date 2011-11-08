@@ -36,9 +36,7 @@
       <HintPath>..\..\libs\nunit\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dkim\Body.cs" />
@@ -48,7 +46,8 @@
     <Compile Include="EmailTests.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MailMessageDataTests.cs" />
+    <Compile Include="MailMessage\MailMessageCanSignTests.cs" />
+    <Compile Include="MailMessage\MailMessageDataTests.cs" />
     <Compile Include="NameValueCollectionTests.cs" />
     <Compile Include="PrivateKeySignerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -69,6 +68,11 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="MailMessage\Attachment.htm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

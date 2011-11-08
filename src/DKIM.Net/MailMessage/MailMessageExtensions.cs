@@ -90,8 +90,12 @@ namespace DKIM
 
             if (email.Headers.ContainsKey("Content-Type"))
             {
+                // fails for:
+                // multipart/alternative
+                // multipart/mixed
+
                 return !email.Headers["Content-Type"].Value.Trim()
-                    .StartsWith("multipart/alternative", StringComparison.InvariantCultureIgnoreCase);
+                    .StartsWith("multipart/", StringComparison.InvariantCultureIgnoreCase);
             }
 
             return true;
