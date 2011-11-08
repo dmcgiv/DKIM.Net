@@ -9,32 +9,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Mail;
+using JetBrains.Annotations;
 
 
 namespace DKIM
 {
 
-	/// <summary>
-	/// Stores the origional header key and value and wether or not the value is folded.
-	/// </summary>
-	public class EmailHeader
-	{
-		public string Key;
-		public string Value;
-
-		/// <summary>
-		/// Indicates that the value is folded over multiple lines.
-		/// </summary>
-		public bool FoldedValue;
-	}
-
-
+    /// <summary>
+    /// Repersents an email message. Used during the signing process.
+    /// </summary>
 	public class Email
 	{
 		public Dictionary<string, EmailHeader> Headers { get; private set; }
 		public string Body { get; private set; }
-		public string Origional { get; private set; }
+		public string Raw { get; private set; }
 
 		Email()
 		{
@@ -44,29 +32,30 @@ namespace DKIM
 		public const string NewLine = "\r\n";
 
 
-
-		public static Email Parse(MailMessage message)
+        [NotNull]
+        public static Email Parse([NotNull]string data)
 		{
-			return Parse(message.GetText());
-		}
+	        if (data == null)
+	        {
+	            throw new ArgumentNullException("data");
+	        }
 
-		public static Email Parse(string data)
-		{
-			
 
-			var headers = new Dictionary<string, EmailHeader>(StringComparer.InvariantCultureIgnoreCase);
+	        var headers = new Dictionary<string, EmailHeader>(StringComparer.InvariantCultureIgnoreCase);
 			using (var reader = new StringReader(data))
 			{
 				
 				string line;
 				string lastKey = null;
+
+                // process headers
 				while ((line = reader.ReadLine()) != null)
 				{
 
 					if (line == string.Empty)
 					{
 						// end of headers
-						return new Email { Headers = headers, Body = reader.ReadToEnd(), Origional = data };
+						return new Email { Headers = headers, Body = reader.ReadToEnd(), Raw = data };
 					}
 
 
@@ -101,7 +90,8 @@ namespace DKIM
 				}
 			}
 
-			return new Email { Headers = headers, Body = string.Empty };
+            // email must have no body
+			return new Email { Headers = headers, Body = string.Empty, Raw = data};
 
 
 		}

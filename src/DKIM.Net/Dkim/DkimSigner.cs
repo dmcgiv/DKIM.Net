@@ -7,14 +7,14 @@
  * 
  * */
 using System;
-using System.Net.Mail;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace DKIM
 {
-	
 
-	public class DkimSigner
+
+	public class DkimSigner : IEmailSigner
 	{
 
 
@@ -25,6 +25,8 @@ namespace DKIM
 
 
 		private readonly IPrivateKeySigner _privateKeySigner;
+
+        private Encoding _encoding;
 
 		/// <summary>
 		/// The domain that will be signing the email.
@@ -45,7 +47,7 @@ namespace DKIM
 		private readonly string[] _headersToSign;
 
 
-		public DkimSigner(IPrivateKeySigner privateKeySigner, string domain, string selector, string[] headersToSign = null)
+        public DkimSigner([NotNull]IPrivateKeySigner privateKeySigner, [NotNull]string domain, [NotNull]string selector, string[] headersToSign = null)
 		{
 			if (privateKeySigner == null)
 			{
@@ -57,9 +59,19 @@ namespace DKIM
 				throw new ArgumentNullException("domain");
 			}
 
+			if (domain.Length == 0)
+			{
+				throw new ArgumentException("Cannot be empty.", "domain");
+			}
+
 			if (selector == null)
 			{
 				throw new ArgumentNullException("selector");
+			}
+
+			if(selector.Length == 0)
+			{
+				throw new ArgumentException("Cannot be empty.", "selector");
 			}
 
 
@@ -75,58 +87,93 @@ namespace DKIM
 
 		
 		// todo remove once stable.
-		public IDebug Debug { get; set; }
+        //public IDebug Debug { get; set; }
 
-		/// <summary>
+	    
+
+	    /// <summary>
 		/// The encoding of the email.
 		/// </summary>
-		public Encoding Encoding { get; set; }
+		public Encoding Encoding
+	    {
+	        get { return _encoding; }
+	        set
+	        {
+	            if(value == null)
+	            {
+	                throw new ArgumentNullException("value");
+	            }
+                _encoding = value;
+	        }
+	    }
 
+        /// <summary>
+        /// The algorithm used to sign the email
+        /// </summary>
+	    public SigningAlgorithm SigningAlgorithm { get; set; }
+
+
+        /// <summary>
+        /// The canonicalization algorithm used for the headers of the email
+        /// </summary>
 		public DkimCanonicalizationAlgorithm HeaderCanonicalization { get; set; }
-		public DkimCanonicalizationAlgorithm BodyCanonicalization { get; set; }
-		
-		
 
-		public MailMessage SignMessage(MailMessage message)
+
+        /// <summary>
+        /// The canonicalization algorithm used for the body of the email
+        /// </summary>
+		public DkimCanonicalizationAlgorithm BodyCanonicalization { get; set; }
+
+
+
+
+
+
+        public string SignEmail(string message)
 		{
 
-			message.BodyEncoding = this.Encoding;
-			message.SubjectEncoding = this.Encoding;
-			
-
-
-
-
-			// get email content and generate initial signature
+            // get email content and generate initial signature
 			var email = Email.Parse(message);
-			var value = this.GenerateDkimHeaderValue(email);
-
 			
 
-			// signature value get formatted so add dummy signature value then remove it
-			message.Headers.Prepend(SignatureKey, value + new string('0', 70));
-			email = Email.Parse(message);
-			var formattedSig = email.Headers[SignatureKey].Value;
-			email.Headers[SignatureKey].Value = formattedSig.Substring(0, formattedSig.Length - 70);
+			email.Headers.Add(SignatureKey, new EmailHeader { Key = SignatureKey, Value = this.GenerateDkimHeaderValue(email) });
+			
+			email.Headers[SignatureKey].Value += this.GenerateSignature(email);
 
-
-
-			// sign email
-			value += GenerateSignature(email);
-			message.Headers.Set(SignatureKey, value);
-
-
-			return message;
+			return SignatureKey + ':' + email.Headers[SignatureKey].Value + Email.NewLine + email.Raw;
+	
 		}
 
 
-	
+
+
+
+		private string GetAlgorithmName()
+		{
+			switch(this.SigningAlgorithm)
+			{
+				case DKIM.SigningAlgorithm.RSASha1:
+					{
+						return "rsa-sha1";
+					}
+				case DKIM.SigningAlgorithm.RSASha256:
+					{
+						return "rsa-sha256";
+					}
+				default:
+					{
+						throw new InvalidOperationException("Invalid SigningAlgorithm");
+					}
+			}
+		}
+
+		
 
 		/*
 		 * see http://www.dkim.org/specs/rfc4871-dkimbase.html#dkim-sig-hdr
 		 * 
 		 * */
-		public string GenerateDkimHeaderValue(Email email)
+	    public string GenerateDkimHeaderValue(Email email)
 		{
 			// timestamp  - seconds since 00:00:00 on January 1, 1970 UTC
 			TimeSpan t = DateTime.Now.ToUniversalTime() -
@@ -135,9 +182,9 @@ namespace DKIM
 
 			var signatureValue = new StringBuilder();
 
-			var start = /*Email.NewLine + */" ";
-			var end = ";";
-			//nl= string.Empty;
+			const string start = Email.NewLine + " ";
+			const string end = ";";
+			
 
 			signatureValue.Append("v=1;");
 			
@@ -146,7 +193,7 @@ namespace DKIM
 			// algorithm used
 			signatureValue.Append(start);
 			signatureValue.Append("a=");
-			signatureValue.Append(_privateKeySigner.Algorithm);
+			signatureValue.Append(GetAlgorithmName());
 			signatureValue.Append(end);
 
 
@@ -218,10 +265,6 @@ namespace DKIM
 			// not supported
 
 
-
-
-
-
 			// hash of body
 			signatureValue.Append(start);
 			signatureValue.Append("bh=");
@@ -238,53 +281,59 @@ namespace DKIM
 			signatureValue.Append("b=");
 			
 
-
-
 			return signatureValue.ToString();
 		}
+
+
+
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="email">The email to sign.</param>
-		/// <param name="signature"></param>
 		/// <returns></returns>
-		public string GenerateSignature(Email email)
+		public string GenerateSignature([NotNull] Email email)
 		{
+		    if (email == null)
+		    {
+		        throw new ArgumentNullException("email");
+		    }
 
+            if (email.Headers == null)
+            {
+                throw new ArgumentException("email headers property is null");
+            }
 
-			var headers = DkimCanonicalizer.CanonicalizeHeaders(email.Headers, this.HeaderCanonicalization, true, _headersToSign);
+		    var headers = DkimCanonicalizer.CanonicalizeHeaders(email.Headers, this.HeaderCanonicalization, true, _headersToSign);
 
-			if (this.Debug != null)
-			{
-				this.Debug.WriteContent("DKIM signature", email.Headers[SignatureKey].Value);
-				this.Debug.WriteContent("DKIM canonicalized headers", headers);
+            //if (this.Debug != null)
+            //{
+            //    this.Debug.WriteContent("DKIM signature", email.Headers[SignatureKey].Value);
+            //    this.Debug.WriteContent("DKIM canonicalized headers", headers);
 
-			}
+            //}
 
 			
 
 			// assumes signature ends with "b="
-			//return signature +  Convert.ToBase64String(_privateKeySigner.Sign(this.Encoding.GetBytes(headers)));
-			return Convert.ToBase64String(_privateKeySigner.Sign(this.Encoding.GetBytes(headers)));
-
+			return Convert.ToBase64String(_privateKeySigner.Sign(this.Encoding.GetBytes(headers), this.SigningAlgorithm));
 
 			
-
 		}
 
 
 		public string SignBody(string body)
 		{
+
 			var cb = DkimCanonicalizer.CanonicalizeBody(body, this.BodyCanonicalization);
 
-			if (this.Debug != null)
-			{
-				this.Debug.WriteContent("DKIM body", body);
-				this.Debug.WriteContent("DKIM canonicalized body", cb);
-			}
+            //if (this.Debug != null)
+            //{
+            //    this.Debug.WriteContent("DKIM body", body);
+            //    this.Debug.WriteContent("DKIM canonicalized body", cb);
+            //}
 
-			return Convert.ToBase64String(_privateKeySigner.Hash(Encoding.GetBytes(cb)));
+			return Convert.ToBase64String(_privateKeySigner.Hash(Encoding.GetBytes(cb), this.SigningAlgorithm));
 
 		}
 

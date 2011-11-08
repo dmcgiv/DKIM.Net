@@ -43,9 +43,10 @@ namespace DKIM.Tests
 		[Test]
 		public void SimgleItemNameDoesNotExist()
 		{
-			var orig = new NameValueCollection();
-
-			orig.Add("n", "v");
+			var orig = new NameValueCollection
+			           	{
+			           		{"n", "v"}
+			           	};
 
 			orig.Prepend("name", "value");
 
@@ -59,9 +60,10 @@ namespace DKIM.Tests
 		[Test]
 		public void SimgleItemNameDoesExist()
 		{
-			var orig = new NameValueCollection();
-
-			orig.Add("name", "v");
+			var orig = new NameValueCollection
+			           	{
+			           		{"name", "v"}
+			           	};
 
 			orig.Prepend("name", "value");
 
@@ -76,10 +78,11 @@ namespace DKIM.Tests
 		[Test]
 		public void MiltipleItemNameDoesExistAndAtStart()
 		{
-			var orig = new NameValueCollection();
-
-			orig.Add("name", "v");
-			orig.Add("name2", "v2");
+			var orig = new NameValueCollection
+			           	{
+			           		{"name", "v"}, 
+							{"name2", "v2"}
+			           	};
 
 			orig.Prepend("name", "value");
 
@@ -95,10 +98,11 @@ namespace DKIM.Tests
 		[Test]
 		public void MiltipleItemNameDoesExistAndNotAtStart()
 		{
-			var orig = new NameValueCollection();
-
-			orig.Add("name2", "v2");
-			orig.Add("name", "v");
+			var orig = new NameValueCollection
+			           	{
+			           		{"name2", "v2"}, 
+							{"name", "v"}
+			           	};
 
 			orig.Prepend("name", "value");
 

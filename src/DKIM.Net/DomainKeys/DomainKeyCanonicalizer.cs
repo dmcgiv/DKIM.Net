@@ -9,6 +9,7 @@
 using System;
 using System.IO;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace DKIM
 {
@@ -24,10 +25,15 @@ namespace DKIM
 
 	public static class DomainKeyCanonicalizer
 	{
-		public static string Canonicalize(Email email, DomainKeyCanonicalizationAlgorithm algorithm, params string[] headersToSign)
+        [NotNull]
+        public static string Canonicalize([NotNull] Email email, DomainKeyCanonicalizationAlgorithm algorithm, params string[] headersToSign)
 		{
+            if (email == null)
+            {
+                throw new ArgumentNullException("email");
+            }
 
-			Func<String, string> process;
+            Func<String, string> process;
 			switch (algorithm)
 			{
 				case DomainKeyCanonicalizationAlgorithm.Simple:
@@ -37,7 +43,7 @@ namespace DKIM
 					}
 				case DomainKeyCanonicalizationAlgorithm.Nofws:
 					{
-						process = x => x.RemoveWhitespace();
+                        process = x => (x == null) ? null : x.RemoveWhitespace();
 						break;
 					}
 				default:
@@ -64,6 +70,11 @@ namespace DKIM
 			{
 				foreach (string key in headersToSign)
 				{
+                    if(key == null)
+                    {
+                        continue;
+                    }
+
 					if (!email.Headers.ContainsKey(key))
 					{
 						continue;
@@ -77,7 +88,7 @@ namespace DKIM
 			}
 
 			var body = new StringBuilder();
-			using (var reader = new StringReader(email.Body))
+			using (var reader = new StringReader(email.Body ?? string.Empty))
 			{
 				string line;
 				int emptyLines = 0;

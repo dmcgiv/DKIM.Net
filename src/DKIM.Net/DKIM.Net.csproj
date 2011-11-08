@@ -33,14 +33,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Annotations.cs" />
     <Compile Include="Dkim\DkimCanonicalizer.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="DomainKeys\DomainKeyCanonicalizer.cs" />
     <Compile Include="DomainKeys\DomainKeySigner.cs" />
     <Compile Include="Email.cs" />
+    <Compile Include="EmailHeader.cs" />
+    <Compile Include="IEmailSigner.cs" />
     <Compile Include="MailMessageExtensions.cs" />
     <Compile Include="NameValueCollectionExtensions.cs" />
     <Compile Include="OpenSslKey.cs" />

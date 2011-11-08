@@ -7,9 +7,11 @@
  * 
  * */
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace DKIM
 {
@@ -29,26 +31,50 @@ namespace DKIM
 	public static class DkimCanonicalizer
 	{
 
-		public static string CanonicalizeHeaders(Dictionary<string, EmailHeader> headers, DkimCanonicalizationAlgorithm type, bool includeSignatureHeader, params string[] headersToSign)
-		{
 
-			if (includeSignatureHeader)
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="headers">The existing email headers</param>
+		/// <param name="type">Canonicalization algorithm to be used</param>
+		/// <param name="includeSignatureHeader">Include the 'DKIM-Signature' header </param>
+		/// <param name="headersToSign">The headers to sign. When no heaaders are suppiled the required headers are used.</param>
+		/// <returns></returns>
+        [NotNull]
+		public static string CanonicalizeHeaders(
+            [NotNull] Dictionary<string, EmailHeader> headers, 
+            DkimCanonicalizationAlgorithm type, 
+            bool includeSignatureHeader, 
+            params string[] headersToSign)
+		{
+		    if (headers == null)
+		    {
+		        throw new ArgumentNullException("headers");
+		    }
+
+		    if (includeSignatureHeader)
 			{
-				if (headersToSign == null || headersToSign.Length == 0)
+				if(headersToSign == null || headersToSign.Length == 0)
 				{
-					headersToSign = new string[] { "From", DkimSigner.SignatureKey };
+					headersToSign = new[] {"From", DkimSigner.SignatureKey};
 				}
 				else
 				{
 					var tmp = new string[headersToSign.Length + 1];
-					//tmp[0] = DkimSigner.SignatureKey;
-					//Array.Copy(headersToSign, 0, tmp, 1, headersToSign.Length);
 					Array.Copy(headersToSign, 0, tmp, 0, headersToSign.Length);
 					tmp[headersToSign.Length] = DkimSigner.SignatureKey;
 					headersToSign = tmp;
-
 				}
 			}
+			else
+			{
+				if(headersToSign == null || headersToSign.Length == 0)
+				{
+					headersToSign = new[] {"From"};
+				}
+			}
+
+			
 
 			ValidateHeaders(headers, headersToSign);
 
@@ -71,6 +97,11 @@ namespace DKIM
 						
 						foreach (var key in headersToSign)
 						{
+                            if(key == null)
+                            {
+                                continue;
+                            }
+
 							var h = headers[key];
 							sb.Append(h.Key);
 							sb.Append(':');
@@ -122,6 +153,11 @@ namespace DKIM
 						
 						foreach (var key in headersToSign)
 						{
+                            if(key == null)
+                            {
+                                continue;
+                            }
+
 							var h = headers[key];
 							sb.Append(h.Key.Trim().ToLower());
 							sb.Append(':');
@@ -151,22 +187,25 @@ namespace DKIM
 			return sb.ToString();
 		}
 
-		private static void ValidateHeaders(Dictionary<string, EmailHeader> headers, IEnumerable<string> headersToSign)
+
+		private static void ValidateHeaders(
+            [NotNull]Dictionary<string, EmailHeader> headers, 
+            [NotNull]IEnumerable<string> headersToSign)
 		{
-			// todo From MUST be included
+			// From header MUST be included
+            //if(!headers.ContainsKey("from"))
+            //{
+            //    throw new InvalidDataException("The FROM header must be included.");
+            //}
 
 			// check all headers that are to be signed exist
-			var invalidHeaders = new List<string>();
-			foreach (var sh in headersToSign)
-			{
-				if (!headers.ContainsKey(sh.Trim()))
-				{
-					invalidHeaders.Add(sh.Trim());
-				}
+			var invalidHeaders = headersToSign
+                .Where(x => x != null)
+                .Select(x => x.Trim())
+                .Where(x => !headers.ContainsKey(x))
+                .ToList();
 
-			}
-
-			if (invalidHeaders.Count > 0)
+		    if (invalidHeaders.Count > 0)
 			{
 				throw new ArgumentException("The following headers to be signed do not exist: " + string.Join(", ", invalidHeaders.ToArray()));
 			}
@@ -174,8 +213,10 @@ namespace DKIM
 
 
 
-
-		public static string CanonicalizeBody(string body, DkimCanonicalizationAlgorithm type)
+        [NotNull]
+		public static string CanonicalizeBody(
+            [CanBeNull]string body, 
+            DkimCanonicalizationAlgorithm type)
 		{
 			if (body == null)
 			{

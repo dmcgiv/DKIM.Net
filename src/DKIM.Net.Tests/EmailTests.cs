@@ -20,7 +20,7 @@ namespace DKIM.Tests
 		public void Test1()
 		{
 
-			var content = @"key1:Value1
+			const string content = @"key1:Value1
 Key2 : VALue2
 Key3:Folded
  Value

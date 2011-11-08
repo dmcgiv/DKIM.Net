@@ -17,7 +17,7 @@ namespace DKIM.Tests
 			msg.From = new MailAddress("joe.bloggs@domain.com", "Joe Bloggs");
 			msg.Subject = "Test Message";
 			msg.Body = "A simple message";
-
+            
 			var data = msg.GetText();
 
 

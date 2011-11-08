@@ -8,6 +8,7 @@
  * */
 using System;
 using System.Collections.Specialized;
+using JetBrains.Annotations;
 
 
 namespace DKIM
@@ -19,14 +20,24 @@ namespace DKIM
 		/// Adds the name and value item to the start of the collection. 
 		/// If the name already exists the origional value is removed.
 		/// </summary>
-		public static void Prepend(this NameValueCollection source, string name, string value)
+        public static void Prepend([NotNull]this NameValueCollection source, [NotNull]string name, [NotNull]string value)
 		{
 			if (source == null)
 			{
 				throw new ArgumentNullException("source");
 			}
 
-			if (source.Count > 0)
+		    if (name == null)
+		    {
+		        throw new ArgumentNullException("name");
+		    }
+
+		    if (value == null)
+		    {
+		        throw new ArgumentNullException("value");
+		    }
+
+		    if (source.Count > 0)
 			{
 				var firstKey = source.AllKeys[0];
 				if (firstKey != null && firstKey.Equals(name, StringComparison.InvariantCultureIgnoreCase))

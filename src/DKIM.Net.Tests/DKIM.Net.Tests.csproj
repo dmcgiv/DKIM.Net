@@ -38,24 +38,21 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DkimCanonicalizationTests.cs">
+    <Compile Include="Dkim\Body.cs" />
+    <Compile Include="Dkim\DkimCanonicalizationTests.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="EmailTests.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MailMessageDataTests.cs" />
-    <Compile Include="MailMessageTests.cs" />
     <Compile Include="NameValueCollectionTests.cs" />
     <Compile Include="PrivateKeySignerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WhiteSpaceTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DKIM.Net\DKIM.Net.csproj">
@@ -69,6 +66,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="_App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

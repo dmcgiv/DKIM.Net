@@ -1,5 +1,4 @@
-﻿using System;
-using System.Configuration;
+﻿using System.Configuration;
 using System.Net.Mail;
 using System.Text;
 using NUnit.Framework;
@@ -25,15 +24,28 @@ namespace DKIM.Tests
 
 			message.From = new MailAddress(ConfigurationManager.AppSettings["from"]);
 
-			// message contains white space 
-			message.Body = @"abc©
- ©   ©
- ©
-
-
-";
 			message.Subject = @"test©";
-			message.IsBodyHtml = false;
+			// message contains white space 
+//            message.Body = @"abc©
+// ©   ©
+// ©
+//
+//
+//";
+
+//            message.IsBodyHtml = false;
+
+
+//            message.Body = @"
+//line 1
+//
+//line 2
+//
+//line 3";
+
+
+			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString("text", Encoding.ASCII, "text/plain"));
+			message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString("html", Encoding.ASCII, "text/html"));
 
 
 
@@ -51,15 +63,12 @@ namespace DKIM.Tests
 			var debugger = new ConsoleDebug();
 
 			dkim.Debug = debugger;
+			dkim.Encoding = Encoding.ASCII;
+			dkim.BodyCanonicalization = DkimCanonicalizationAlgorithm.Relaxed;
 
 
 
-			var domainkey = new DomainKeySigner(
-				privateKey, 
-				ConfigurationManager.AppSettings["domain"],
-				ConfigurationManager.AppSettings["selector"], 
-				new string[] { "From", "To", "Subject" }
-				);
+	
 
 			
 
@@ -71,10 +80,18 @@ namespace DKIM.Tests
 			debugger.WriteContent("dkim", text);
 
 
-			signedMessage = domainkey.SignMessage(signedMessage);
+
+		//    var domainkey = new DomainKeySigner(
+		//privateKey,
+		//ConfigurationManager.AppSettings["domain"],
+		//ConfigurationManager.AppSettings["selector"],
+		//new string[] { "From", "To", "Subject" }
+		//);
+
+			//signedMessage = domainkey.SignMessage(signedMessage);
 			
-			text = signedMessage.GetText();
-			debugger.WriteContent("domainkey", text);
+			//text = signedMessage.GetText();
+			//debugger.WriteContent("domainkey", text);
 
 			new SmtpClient().Send(signedMessage);
 

@@ -9,6 +9,7 @@
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using JetBrains.Annotations;
 
 
 namespace DKIM
@@ -37,33 +38,120 @@ namespace DKIM
 
 	public interface IPrivateKeySigner
 	{
-		byte[] Sign(byte[] data);
-		byte[] Hash(byte[] data);
-		string Algorithm { get;  }
+        [NotNull]
+        byte[] Sign([NotNull]byte[] data, SigningAlgorithm algorithm);
+
+        [NotNull]
+        byte[] Hash([NotNull]byte[] data, SigningAlgorithm algorithm);
 	}
 
 
-	public class AlgorithmInfo
+	public class PrivateKeySigner : IPrivateKeySigner
 	{
-		public AlgorithmInfo(SigningAlgorithm algorithm)
-		{
-			this.SigningAlgorithm = algorithm;
 
+		#region Factory methods
+
+        [NotNull]
+		public static IPrivateKeySigner LoadFromFile([NotNull] string path)
+		{
+		    if (path == null)
+		    {
+		        throw new ArgumentNullException("path");
+		    }
+
+		    var privateKey = File.ReadAllText(path);
+
+			return new PrivateKeySigner(privateKey);
+		}
+
+        [NotNull]
+        public static IPrivateKeySigner Create([NotNull]string privateKey)
+		{
+			return new PrivateKeySigner(privateKey);
+		}
+
+		#endregion
+
+
+		private readonly byte[] _key;
+
+
+        private PrivateKeySigner([NotNull]string privateKey)
+		{
+			if (privateKey == null)
+			{
+				throw new ArgumentNullException("privateKey");
+			}
+
+			_key = OpenSslKey.DecodeOpenSSLPrivateKey(privateKey);
+
+		}
+
+
+
+
+		public byte[] Sign(byte[] data, SigningAlgorithm algorithm)
+		{
+		    if (data == null)
+		    {
+		        throw new ArgumentNullException("data");
+		    }
+
+		    using (var rsa = OpenSslKey.DecodeRSAPrivateKey(_key))
+			{
+				byte[] signature = rsa.SignData(data, GetHashName(algorithm));
+
+				return signature;
+
+			}
+		}
+
+	    public byte[] Hash(byte[] data, SigningAlgorithm algorithm)
+	    {
+	        if (data == null)
+	        {
+	            throw new ArgumentNullException("data");
+	        }
+
+	        using(var hash = GetHash(algorithm))
+			{
+				return hash.ComputeHash(data);	
+			}
+	    }
+
+
+        [NotNull]
+	    private static string GetHashName(SigningAlgorithm algorithm)
+		{
 			switch (algorithm)
 			{
 				case SigningAlgorithm.RSASha1:
 					{
-						this.HashAlgorithm = new SHA1Managed();
-						this.Name = "rsa-sha1";
-
-						break;
+						return "SHA1";
 					}
 				case SigningAlgorithm.RSASha256:
 					{
-						this.HashAlgorithm = new SHA256Managed();
-						this.Name = "rsa-sha256";
+						return "SHA256";
+					}
+				default:
+					{
+						throw new ArgumentException("Invalid SigningAlgorithm value", "algorithm");
+					}
 
-						break;
+			}
+		}
+
+		private static HashAlgorithm GetHash(SigningAlgorithm algorithm)
+		{
+			switch (algorithm)
+			{
+				case SigningAlgorithm.RSASha1:
+					{
+						return new SHA1Managed();
+					}
+				case SigningAlgorithm.RSASha256:
+					{
+						return new SHA256Managed();
 					}
 
 				default:
@@ -73,75 +161,5 @@ namespace DKIM
 
 			}
 		}
-
-		public SigningAlgorithm SigningAlgorithm { get; private set; }
-		public HashAlgorithm HashAlgorithm { get; private set; }
-		public string Name { get; private set; }
-
-	}
-
-	public class PrivateKeySigner : IPrivateKeySigner
-	{
-
-		#region Factory methods
-		
-		public static IPrivateKeySigner LoadFromFile(string path, SigningAlgorithm signingAlgorithm = SigningAlgorithm.RSASha256)
-		{
-			var privateKey = File.ReadAllText(path);
-
-			return new PrivateKeySigner(privateKey, signingAlgorithm);
-		}
-
-
-		public static IPrivateKeySigner Create(string privateKey, SigningAlgorithm signingAlgorithm = SigningAlgorithm.RSASha256)
-		{
-			return new PrivateKeySigner(privateKey, signingAlgorithm);
-		}
-
-		#endregion
-
-
-		private readonly byte[] _key;
-		private readonly AlgorithmInfo _algorithmInfo;
-
-		PrivateKeySigner(string privateKey, SigningAlgorithm signingAlgorithm)
-		{
-			if (privateKey == null)
-			{
-				throw new ArgumentNullException("privateKey");
-			}
-
-			_key = OpenSslKey.DecodeOpenSSLPrivateKey(privateKey);
-
-			_algorithmInfo = new AlgorithmInfo(signingAlgorithm);
-		}
-
-
-
-		public byte[] Sign(byte[] data)
-		{
-
-			using (var rsa = OpenSslKey.DecodeRSAPrivateKey(_key))
-			{
-				byte[] signature = rsa.SignData(data, _algorithmInfo.SigningAlgorithm == SigningAlgorithm.RSASha1 ? "SHA1" : "SHA256");
-				
-				return signature;
-
-			}
-			
-		}
-
-		public byte[] Hash(byte[] data)
-		{
-			return _algorithmInfo.HashAlgorithm.ComputeHash(data);
-		}
-
-		public string Algorithm
-		{
-			get { return _algorithmInfo.Name; }
-		}
-
-
-		
 	}
 }

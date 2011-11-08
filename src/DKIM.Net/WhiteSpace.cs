@@ -6,7 +6,10 @@
  * 
  * 
  * */
+
+using System;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace DKIM
 {
@@ -26,14 +29,20 @@ namespace DKIM
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		public static string ReduceWitespace(this string text)
+		[NotNull]
+        public static string ReduceWitespace([NotNull]this string text)
 		{
-			if (text.IndexOfAny(new char[] { ' ', '\t', '\r', '\n' }) == -1)
+		    if (text == null)
+		    {
+		        throw new ArgumentNullException("text");
+		    }
+
+		    if (text.IndexOfAny(new char[] { ' ', '\t', '\r', '\n' }) == -1)
 			{
 				return text;
 			}
 
-			var sb = new StringBuilder();
+			var sb = new StringBuilder(text.Length);
 			bool hasWhiteSpace = false;
 			foreach (var c in text)
 			{
@@ -65,14 +74,20 @@ namespace DKIM
 		/// </summary>
 		/// <param name="text"></param>
 		/// <returns></returns>
-		public static string RemoveWhitespace(this string text)
+        [NotNull]
+        public static string RemoveWhitespace([NotNull]this string text)
 		{
-			if (text.IndexOfAny(new char[] { ' ', '\t', '\r', '\n' }) == -1)
+		    if (text == null)
+		    {
+		        throw new ArgumentNullException("text");
+		    }
+
+		    if (text.IndexOfAny(new char[] { ' ', '\t', '\r', '\n' }) == -1)
 			{
 				return text;
 			}
 
-			var sb = new StringBuilder();
+			var sb = new StringBuilder(text.Length);
 			foreach (var c in text)
 			{
 				switch(c)
