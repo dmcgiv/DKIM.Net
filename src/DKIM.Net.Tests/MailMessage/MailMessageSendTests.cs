@@ -5,6 +5,11 @@ using NUnit.Framework;
 namespace DKIM.Tests
 {
 
+
+    /// <summary>
+    /// tests sending signed MailMessage emails 
+    /// tested with yahoo and gmail addresses and both pass
+    /// </summary>
     [TestFixture]
     public class MailMessageSendTests
     {
@@ -13,8 +18,8 @@ namespace DKIM.Tests
 
         public MailMessageSendTests()
         {
-            _from = ConfigurationManager.AppSettings["SenderEmail"];
-            _to = ConfigurationManager.AppSettings["RecipientEmail"];
+            _from = ConfigurationManager.AppSettings["from"];
+            _to = ConfigurationManager.AppSettings["to"];
 
             _domain = ConfigurationManager.AppSettings["domain"];
             _selector = ConfigurationManager.AppSettings["selector"];
@@ -22,10 +27,15 @@ namespace DKIM.Tests
             _privateKey = ConfigurationManager.AppSettings["privatekey"];
         }
 
+        static string[] GetHeaders(string headers)
+        {
+            return headers == null ? null : headers.Split(',');
+        }
 
 
-        [Test]
-        public void Valid_send_sign_DKIM()
+        [TestCase(null)]
+        [TestCase("From,To,Subject")]
+        public void Valid_send_sign_DKIM(string headers)
         {
 
             var msg = new MailMessage();
@@ -35,7 +45,7 @@ namespace DKIM.Tests
             msg.Body = "A simple message";
 
 
-            var dkimSigner = new DkimSigner(PrivateKeySigner.Create(_privateKey), _domain, _selector);
+            var dkimSigner = new DkimSigner(PrivateKeySigner.Create(_privateKey), _domain, _selector, GetHeaders(headers));
 
             msg.DkimSign(dkimSigner);
 
@@ -49,8 +59,9 @@ namespace DKIM.Tests
 
 
 
-        [Test]
-        public void Valid_send_sign_DomainKey()
+        [TestCase(null)]
+        [TestCase("From,To,Subject")]
+        public void Valid_send_sign_DomainKey(string headers)
         {
 
             var msg = new MailMessage();
@@ -60,7 +71,7 @@ namespace DKIM.Tests
             msg.Body = "A simple message";
 
 
-            var domainKeySigner = new DomainKeySigner(PrivateKeySigner.Create(_privateKey), _domain, _selector);
+            var domainKeySigner = new DomainKeySigner(PrivateKeySigner.Create(_privateKey), _domain, _selector, GetHeaders(headers));
 
             msg.DomainKeySign(domainKeySigner);
 
@@ -73,22 +84,23 @@ namespace DKIM.Tests
         }
 
 
-        [Test]
-        public void Valid_send_sign_DKIM_then_DomainKey()
+        [TestCase(null)]
+        [TestCase("From,To,Subject")]
+        public void Valid_send_sign_DKIM_then_DomainKey(string headers)
         {
             var msg = new MailMessage();
             msg.To.Add(new MailAddress(_to, "Jim Bob"));
             msg.From = new MailAddress(_from, "Joe Bloggs");
-            msg.Subject = "Test DKIM & DOmainKeys Message";
+            msg.Subject = "Test DKIM & DomainKeys Message";
             msg.Body = "A simple message";
 
 
-            var dkimSigner = new DkimSigner(PrivateKeySigner.Create(_privateKey), _domain, _selector);
+            var dkimSigner = new DkimSigner(PrivateKeySigner.Create(_privateKey), _domain, _selector, GetHeaders(headers));
 
             msg.DkimSign(dkimSigner);
 
 
-            var domainKeySigner = new DomainKeySigner(PrivateKeySigner.Create(_privateKey), _domain, _selector);
+            var domainKeySigner = new DomainKeySigner(PrivateKeySigner.Create(_privateKey), _domain, _selector, GetHeaders(headers));
 
             msg.DomainKeySign(domainKeySigner);
 
@@ -98,23 +110,24 @@ namespace DKIM.Tests
         }
 
 
-        [Test]
-        public void Valid_send_sign_DomainKey_then_DKIM()
+        [TestCase(null)]
+        [TestCase("From,To,Subject")]
+        public void Valid_send_sign_DomainKey_then_DKIM(string headers)
         {
             var msg = new MailMessage();
             msg.To.Add(new MailAddress(_to, "Jim Bob"));
             msg.From = new MailAddress(_from, "Joe Bloggs");
-            msg.Subject = "Test DOmainKeys and DKIM Message";
+            msg.Subject = "Test DomainKeys & DKIM Message";
             msg.Body = "A simple message";
 
 
 
-            var domainKeySigner = new DomainKeySigner(PrivateKeySigner.Create(_privateKey), _domain, _selector);
+            var domainKeySigner = new DomainKeySigner(PrivateKeySigner.Create(_privateKey), _domain, _selector, GetHeaders(headers));
 
             msg.DomainKeySign(domainKeySigner);
 
 
-            var dkimSigner = new DkimSigner(PrivateKeySigner.Create(_privateKey), _domain, _selector);
+            var dkimSigner = new DkimSigner(PrivateKeySigner.Create(_privateKey), _domain, _selector, GetHeaders(headers));
 
             msg.DkimSign(dkimSigner);
 
