@@ -5,7 +5,8 @@ DomainKeys Identified Mail (DKIM) and Domain Key email signing for .Net Framewor
 
 Known Issues
 ------------
-As System.Net.Mail.SmtpClient generates boundary identifiers randomly and this code hacks the SmtpClient to retrieve the full email content before sending email the code cannot be used when sending with SmtpClient and the MailMessage has an alternative view or attacgment.
+As System.Net.Mail.SmtpClient generates boundary identifiers randomly and as this code hacks the SmtpClient to retrieve the full email 
+content before sending the code cannot be used when sending with SmtpClient and the MailMessage when the MailMessage has an alternative view or an attachment.
 	
 	
 
