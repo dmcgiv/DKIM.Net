@@ -10,15 +10,16 @@ namespace DKIM
     public static class MailMessageText
     {
         private static readonly Func<Stream, object> MailWriterFactory;
-        private static readonly Action<MailMessage, object, bool, bool> Send;
+        private static readonly Action<MailMessage, object, bool, bool> Send3;
+        private static readonly Action<MailMessage, object, bool> Send2;
         private static readonly Action<object> Close;
 
         static MailMessageText()
-		{
+        {
 
             var messageType = typeof(MailMessage);
             var mailWriterType = messageType.Assembly.GetType("System.Net.Mail.MailWriter");
-            
+
 
             // mail writer constructor
             {
@@ -27,18 +28,37 @@ namespace DKIM
                 var conExp = Expression.New(constructorInfo, argument);
                 MailWriterFactory = Expression.Lambda<Func<Stream, object>>(conExp, argument).Compile();
             }
-            
-            
+
+
             // mail message Send method
+            // void Send(BaseWriter writer, Boolean sendEnvelope)
+            // void Send(BaseWriter writer, bool sendEnvelope, bool allowUnicode)
             {
                 var sendMethod = messageType.GetMethod("Send", BindingFlags.Instance | BindingFlags.NonPublic);
                 var mailWriter = Expression.Parameter(typeof(object), "mailWriter");
                 var sendEnvelope = Expression.Parameter(typeof(bool), "sendEnvelope");
                 var allowUnicode = Expression.Parameter(typeof(bool), "allowUnicode");
                 var instance = Expression.Parameter(messageType, "instance");
-                var call = Expression.Call(instance, sendMethod, Expression.Convert(mailWriter, mailWriterType), sendEnvelope, allowUnicode);
 
-                Send = Expression.Lambda<Action<MailMessage, object, bool, bool>>(call, instance, mailWriter, sendEnvelope, allowUnicode).Compile();
+                var pars = sendMethod.GetParameters();
+                if (pars.Length == 3)
+                {
+                    var call = Expression.Call(instance, sendMethod, Expression.Convert(mailWriter, mailWriterType),
+                                               sendEnvelope, allowUnicode);
+
+                    Send3 =
+                        Expression.Lambda<Action<MailMessage, object, bool, bool>>(call, instance, mailWriter,
+                                                                                   sendEnvelope, allowUnicode).Compile();
+                }
+                else if (pars.Length == 2)
+                {
+                    var call = Expression.Call(instance, sendMethod, Expression.Convert(mailWriter, mailWriterType),
+                                              sendEnvelope);
+
+                    Send2 =
+                        Expression.Lambda<Action<MailMessage, object, bool>>(call, instance, mailWriter,
+                                                                                   sendEnvelope).Compile();
+                }
             }
 
 
@@ -53,7 +73,7 @@ namespace DKIM
 
 
 
-		}
+        }
 
 
         /// <summary>
@@ -77,7 +97,15 @@ namespace DKIM
 
                 object mailWriter = MailWriterFactory(internalStream);
 
-                Send(message, mailWriter, false, true);
+                if (Send2 != null)
+                {
+                    Send2(message, mailWriter, false);
+                }
+                else
+                {
+                    Send3(message, mailWriter, false, true);
+                }
+
                 Close(mailWriter);
 
                 internalStream.Position = 0;
