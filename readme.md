@@ -14,7 +14,7 @@ content before sending the code cannot be used when sending with SmtpClient and 
 
 Example - Sending with SmtpClient
 ------------
-
+```c#
 	var msg = new MailMessage();
 
 	msg.From = new MailAddress("me@mydomain.com", "Joe Bloggs");
@@ -39,4 +39,15 @@ Example - Sending with SmtpClient
 	msg.DkimSign(dkimSigner);
 
 	new SmtpClient().Send(msg);
+``` 
  
+Example - DNS Records
+-----------------------
+
+Domain Key settings
+
+	_domainkey "o=~;r=admin@mydomain.com"
+	
+Domain Key / DKIM selector
+
+	selector._domainkey "k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDetWmczoNly/wfDc5WH8F2o42kGjYG7bbmfxjNP2y2qZja84v5W8z8SL702w3N5ZwQLdQmuQ8yN4WOYrg8DHGOB6g+xVP3h1Hr1+C05Vk/x3BXw0wIffNqcVzPkRNNNILtiwPJhhlDVMvaTx20vrrCAz9i6CX6Onj4OWxUaAjtuQIDAQAB"
