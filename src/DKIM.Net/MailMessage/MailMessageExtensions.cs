@@ -117,6 +117,7 @@ namespace DKIM
 
             message.BodyEncoding = signer.Encoding;
             message.SubjectEncoding = signer.Encoding;
+            message.HeadersEncoding = signer.Encoding;
 
             var email = Email.Parse(message.GetText());
 
@@ -149,6 +150,7 @@ namespace DKIM
 
             message.BodyEncoding = signer.Encoding;
             message.SubjectEncoding = signer.Encoding;
+            message.HeadersEncoding = signer.Encoding;
 
 
             // get email content and generate initial signature

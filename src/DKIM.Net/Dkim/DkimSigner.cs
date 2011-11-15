@@ -7,6 +7,7 @@
  * 
  * */
 using System;
+using System.Diagnostics;
 using System.Text;
 using JetBrains.Annotations;
 
@@ -78,10 +79,15 @@ namespace DKIM
 			_privateKeySigner = privateKeySigner;
 			_domain = domain;
 			_selector = selector;
-			_headersToSign = headersToSign;
+			_headersToSign = headersToSign ?? new string[]{"From"};
+
+            if (_headersToSign.Length ==0)
+            {
+                _headersToSign = new string[] {"From"};
+            }
 
 
-			this.Encoding = Encoding.UTF8;
+            this.Encoding = Encoding.UTF8;
 
 		}
 
@@ -182,7 +188,7 @@ namespace DKIM
 
 			var signatureValue = new StringBuilder();
 
-			const string start = Email.NewLine + " ";
+			const string start = /*Email.NewLine +*/ " ";
 			const string end = ";";
 			
 
@@ -325,7 +331,13 @@ namespace DKIM
 		public string SignBody(string body)
 		{
 
+            Trace.WriteLine("DKIM body:");
+            Trace.WriteLine(body);
+
 			var cb = DkimCanonicalizer.CanonicalizeBody(body, this.BodyCanonicalization);
+
+            Trace.WriteLine("DKIM canonicalized body:");
+            Trace.WriteLine(cb);
 
             //if (this.Debug != null)
             //{

@@ -7,6 +7,7 @@
  * 
  * */
 using System;
+using System.Diagnostics;
 using System.Text;
 using JetBrains.Annotations;
 
@@ -48,8 +49,7 @@ namespace DKIM
 
         #region Properties
 
-        [NotNull]
-        private Encoding _encoding = Encoding.UTF8;
+	    [NotNull] private Encoding _encoding;//= Encoding.ASCII;
 
         [PublicAPI]
 	    [NotNull]
@@ -81,7 +81,7 @@ namespace DKIM
         #endregion Properties
 
 
-        public DomainKeySigner([NotNull]IPrivateKeySigner privateKeySigner, [NotNull]string domain, [NotNull]string selector, string[] headersToSign)
+        public DomainKeySigner([NotNull]IPrivateKeySigner privateKeySigner, [NotNull]string domain, [NotNull]string selector, string[] headersToSign = null)
 		{
 			if (privateKeySigner == null)
 			{
@@ -114,7 +114,7 @@ namespace DKIM
 			_headersToSign = headersToSign;
 			_privateKeySigner = privateKeySigner;
 
-			this.Encoding = Encoding.UTF8;
+            this.Encoding = Encoding.UTF8;
 		}
 
 
@@ -138,11 +138,11 @@ namespace DKIM
 
 			var signatureValue = new StringBuilder();
 
-			const string start = Email.NewLine + " ";
+			const string start = /*Email.NewLine +*/ " ";
 			const string end = ";";
 
 			// algorithm used
-			signatureValue.Append(start);
+			//signatureValue.Append(" ");
 			signatureValue.Append("a=");
 			signatureValue.Append("rsa-sha1");// only rsa-sha1 suprted
 			signatureValue.Append(end);
@@ -207,6 +207,8 @@ namespace DKIM
 
             var text = DomainKeyCanonicalizer.Canonicalize(email, this.Canonicalization, _headersToSign);
 
+            Trace.WriteLine("DomainKey canonicalized headers:");
+            Trace.WriteLine(text);
             //if (this.Debug != null)
             //{
             //    this.Debug.WriteContent("DomainKey canonicalized headers", text);

@@ -36,6 +36,7 @@
       <HintPath>..\..\libs\nunit\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
@@ -48,6 +49,7 @@
     </Compile>
     <Compile Include="MailMessage\MailMessageCanSignTests.cs" />
     <Compile Include="MailMessage\MailMessageDataTests.cs" />
+    <Compile Include="MailMessage\MailMessageSendTests.cs" />
     <Compile Include="NameValueCollectionTests.cs" />
     <Compile Include="PrivateKeySignerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
